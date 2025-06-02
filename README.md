@@ -135,3 +135,5 @@ JobSearch/
 
 ---
 **Enjoy using JobSearch Dashboard!** If you run into issues or want to propose enhancements, please open an issue or submit a pull request.
+
+Part of the Code comes from this github repo: https://github.com/MochiDay
