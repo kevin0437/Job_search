@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
+  <title>Job Scraper Results</title>
+
+  <!-- Bulma CSS -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
+  />
+  <!-- Font Awesome for icons -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
+    integrity="sha512-..."
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+
+  <style>
+    /* Optional: add a slight drop shadow to job cards */
+    .card {
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    /* Truncate description text after a few lines */
+    .description {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+        /* Add this to your <style> block or a separate CSS file */
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;       /* allow tags to wrap to next line */
+      gap: 0.25rem;          /* spacing between tags */
+      max-height: 6rem;      /* adjust as needed to limit vertical height */
+      overflow-y: auto;      /* scroll if too many lines */
+      padding-right: 0.5rem; /* account for scrollbar */
+    }
+    .tag {
+      flex-shrink: 0;        /* keep each tag from shrinking too small */
+    }
+
+  </style>
+</head>
+<body>
+  <!-- Hero/Header -->
+  <section class="hero is-primary">
+    <div class="hero-body">
+      <div class="container">
+        <h1 class="title">Job Scraper Dashboard</h1>
+        <h2 class="subtitle">Latest collected job listings</h2>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main container -->
+  <section class="section">
+    <div class="container">
+      <!-- Action buttons -->
+      <div class="level">
+        <div class="level-left"></div>
+        <div class="level-right">
+          <button class="button is-link" id="refresh-btn">
+            <span class="icon"><i class="fas fa-sync-alt"></i></span>
+            <span>Refresh Jobs</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Job cards grid -->
+      <div class="columns is-multiline" id="jobs">
+        <!-- Cards will be inserted here via JavaScript -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Bulma and JS dependencies are already in CSS; now add script -->
+  <script>
+    const jobsContainer = document.getElementById("jobs");
+    const refreshBtn = document.getElementById("refresh-btn");
+
+    async function loadJobs() {
+      // Show a Bulma loading placeholder
+      jobsContainer.innerHTML = `
+        <div class="column is-12 has-text-centered">
+          <span class="icon is-large">
+            <i class="fas fa-spinner fa-pulse fa-3x"></i>
+          </span>
+        </div>
+      `;
+
+      try {
+        const res = await fetch("/api/jobs");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const jobs = await res.json();
+
+        if (!jobs.length) {
+          jobsContainer.innerHTML = `
+            <div class="column is-12 has-text-centered">
+              <p class="has-text-grey">No jobs found.</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Clear and render job cards
+        jobsContainer.innerHTML = "";
+        jobs.forEach((job) => {
+          const col = document.createElement("div");
+          col.className = "column is-12-mobile is-6-tablet is-4-desktop";
+
+          // Build a Bulma card
+          col.innerHTML = `
+            <div class="card">
+              <header class="card-header">
+                <p class="card-header-title">
+                  ${job.job_title}
+                </p>
+              </header>
+              <div class="card-content">
+                <div class="media">
+                  <div class="media-content">
+                    <p class="title is-5">${job.company}</p>
+                    <p class="subtitle is-6">
+                      <span class="icon has-text-info">
+                        <i class="fas fa-map-marker-alt"></i>
+                      </span>
+                      ${job.location || "Unknown"} &nbsp;&nbsp;
+                      <span class="icon has-text-warning">
+                        <i class="fas fa-clock"></i>
+                      </span>
+                      ${job.years} yr${job.years !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </div>
+                <!-- <div class="content description">
+                  ${job.description}
+                </div> -->
+                <nav class="level is-mobile">
+                  <div class="content">
+                    <div class="tags-container">
+                      ${job.skills
+                        .map(
+                          (s) => `<span class="tag is-light is-medium">${s}</span>`
+                        )
+                        .join("")}
+                    </div>
+                  </div>
+                </nav>
+              </div>
+              <footer class="card-footer">
+                <a
+                  href="${job.job_url}"
+                  class="card-footer-item"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  View on ${job.job_board}
+                </a>
+              </footer>
+            </div>
+          `;
+          jobsContainer.appendChild(col);
+        });
+      } catch (error) {
+        jobsContainer.innerHTML = `
+          <div class="column is-12 has-text-centered">
+            <p class="has-text-danger">Error loading jobs.</p>
+          </div>
+        `;
+        console.error(error);
+      }
+    }
+
+    refreshBtn.addEventListener("click", async () => {
+      refreshBtn.classList.add("is-loading");
+      try {
+        const res = await fetch("/api/refresh", { method: "POST" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        await loadJobs();
+      } catch (err) {
+        console.error("Refresh failed:", err);
+      } finally {
+        refreshBtn.classList.remove("is-loading");
+      }
+    });
+
+    window.addEventListener("DOMContentLoaded", loadJobs);
+  </script>
+</body>
+</html>

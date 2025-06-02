@@ -1,0 +1,7 @@
+beautifulsoup4
+requests
+yagooglesearch
+python-dotenv
+replicate
+supabase
+flask

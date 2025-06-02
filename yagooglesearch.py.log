@@ -1,0 +1,15 @@
+2025-05-30 22:39:11,201 [MainThread  ] [INFO] Requesting URL: https://www.google.com/
+2025-05-30 22:39:11,515 [MainThread  ] [DEBUG]     status_code: 200
+2025-05-30 22:39:11,515 [MainThread  ] [DEBUG]     headers: {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; U; nl; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6 Opera 11.01'}
+2025-05-30 22:39:11,515 [MainThread  ] [DEBUG]     cookies: <RequestsCookieJar[<Cookie AEC=AVh_V2hcm5XGE6PSZtvPjoG3j7CCAQhaZYjcAeLYS7r_xU-pQ78GJ2opmT8 for .google.com/>, <Cookie NID=524=PjFgr2nvItZDJ7xO2BvLHvjJYjAk9U-3L8NzvYoGROR3Gta2VxamkyyUkqFkd0KlNPSO3pDeJk0Pd9je1MyRzJVHV9cc5_CI_Z1yrkGJ9ObsoBiesA2PvtlrB1PsiXjmpE1-ac9Yw7WDno82BrOqzhhe0FAGSV7yq8hY9k4kd6rpXfZLfKo2EKEoUIdC8fQX2sX-_c6EHRwhPD7_M-iDHohk for .google.com/>]>
+2025-05-30 22:39:11,524 [MainThread  ] [DEBUG]     proxy: 
+2025-05-30 22:39:11,524 [MainThread  ] [DEBUG]     verify_ssl: True
+2025-05-30 22:39:11,525 [MainThread  ] [INFO] Stats: start=0, num=100, total_valid_links_found=0 / max_search_result_urls_to_return=100
+2025-05-30 22:39:11,525 [MainThread  ] [INFO] Requesting URL: https://www.google.com/search?hl=en&lr=lang_en&q=site%3Agithub.com&num=100&btnG=Google+Search&tbs=li:1&safe=off&cr=&filter=0
+2025-05-30 22:39:12,300 [MainThread  ] [DEBUG]     status_code: 429
+2025-05-30 22:39:12,301 [MainThread  ] [DEBUG]     headers: {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; U; nl; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6 Opera 11.01'}
+2025-05-30 22:39:12,301 [MainThread  ] [DEBUG]     cookies: <RequestsCookieJar[]>
+2025-05-30 22:39:12,302 [MainThread  ] [DEBUG]     proxy: 
+2025-05-30 22:39:12,302 [MainThread  ] [DEBUG]     verify_ssl: True
+2025-05-30 22:39:12,302 [MainThread  ] [WARNING] Google is blocking your IP for making too many requests in a specific time period.
+2025-05-30 22:39:12,303 [MainThread  ] [INFO] Sleeping for 45 minutes...
