@@ -1,3 +1,7 @@
 .env
 test.ipynb
 titles.py
+__pycache__/
+.venv/
+supabase_test
+proxies.txt
