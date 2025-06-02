@@ -7,9 +7,6 @@ from supabase import create_client
 from utils.engine import find_jobs, handle_job_insert, JobSite, TBS
 
 
-
-
-
 # ─── Load configuration and initialize clients ───────────────────
 load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -39,7 +36,7 @@ def index():
 DEFAULT_QUERY = """(software OR SWE OR SDE OR "back end" OR systems OR programmer OR coder
      OR "machine learning" OR ML OR "data science" OR "data engineer" OR "data" OR quantitative OR quant OR "full stack") (engineer OR developer OR analyst OR scientist OR researcher)"""
 DEFAULT_TBS = TBS.PAST_TWELVE_HOURS
-DEFAULT_MAX = 50
+DEFAULT_MAX = 10
 
 # ─── API Endpoints ──────────────────────────────────────────────
 @app.route("/api/jobs", methods=["GET"])

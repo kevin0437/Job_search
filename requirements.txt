@@ -1,7 +1,8 @@
+Flask
+flask-cors
+supabase
+python-dotenv
+yagooglesearch
 beautifulsoup4
 requests
-yagooglesearch
-python-dotenv
 replicate
-supabase
-flask
