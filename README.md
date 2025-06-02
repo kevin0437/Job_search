@@ -71,7 +71,7 @@ JobSearch/
 ## Installation
 1. **Clone the repository** (if not already):
    ```bash
-   git clone https://github.com/yourusername/JobSearch.git
+   git clone https://github.com/kevin0437/Job_search.git
    cd JobSearch
    ```
 2. **Create and activate a virtual environment** (recommended):
