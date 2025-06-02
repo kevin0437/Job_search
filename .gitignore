@@ -4,3 +4,4 @@ titles.py
 proxies.txt
 yagooglesearch.py.log
 .venv
+utils\__pycache__
