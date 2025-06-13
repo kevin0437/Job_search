@@ -35,8 +35,8 @@ def index():
 # Default search parameters
 DEFAULT_QUERY = """(software OR SWE OR SDE OR "back end" OR systems OR programmer OR coder
      OR "machine learning" OR ML OR "data science" OR "data engineer" OR "data" OR quantitative OR quant OR "full stack") (engineer OR developer OR analyst OR scientist OR researcher)"""
-DEFAULT_TBS = TBS.PAST_TWELVE_HOURS
-DEFAULT_MAX = 10
+DEFAULT_TBS = TBS.PAST_DAY
+DEFAULT_MAX = 100
 
 # ─── API Endpoints ──────────────────────────────────────────────
 @app.route("/api/jobs", methods=["GET"])

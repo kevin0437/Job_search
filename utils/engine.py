@@ -46,13 +46,14 @@ def get_free_proxies() -> list[str]:
         print("Error: ", e)
         return []
 
-def extract_requirements(description: str) -> tuple[list[str], list[str]]:
+def extract_requirements(description: str,title: str) -> tuple[list[str], list[str]]:
         prompt = (
             "Extract the minimum years of experience required and the list of technical skills"
-            "from the following job description. If not mentioned, guess the years of experience based on the job title. (0 years if nothing is mentioned)\n\n"
+            "from the following job description and job title. If not mentioned, guess the years of experience based on the job title. (0 years if nothing is mentioned)\n\n"
             "Respond *only* with a JSON object containing exactly two keys: "
             "`years` (an integer) and `skills` (an array of strings, less than 3 words).\n\n"
             f"Job Description:\n{description}"
+            f"Job Title:\n{title}"
         )
 
         # 4) Prepare the model input
@@ -247,7 +248,7 @@ def handle_job_insert(supabase: any, job_urls: list[str], job_site: JobSite):
             
             
             years, skills = 0, ["None"]
-            years, skills = extract_requirements(description)
+            years, skills = extract_requirements(description, title)
             
             # 3) build your record
             record = {

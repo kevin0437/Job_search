@@ -23,29 +23,51 @@
   />
 
   <style>
-    /* Optional: add a slight drop shadow to job cards */
-    .card {
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    }
-    /* Truncate description text after a few lines */
-    .description {
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-        /* Add this to your <style> block or a separate CSS file */
-    .tags-container {
-      display: flex;
-      flex-wrap: wrap;       /* allow tags to wrap to next line */
-      gap: 0.25rem;          /* spacing between tags */
-      max-height: 6rem;      /* adjust as needed to limit vertical height */
-      overflow-y: auto;      /* scroll if too many lines */
-      padding-right: 0.5rem; /* account for scrollbar */
-    }
-    .tag {
-      flex-shrink: 0;        /* keep each tag from shrinking too small */
-    }
+      .nowrap {
+        white-space: nowrap;
+      }
+
+      /* center columns within the container */
+      .columns.is-centered {
+        justify-content: center;
+      }
+          /* 1) Make each column a flex container and center its card */
+      .columns.is-multiline .column {
+        display: flex;
+        justify-content: center;
+        align-items: stretch; /* so cards all match height */
+      }
+
+      /* 2) Give every card an explicit width */
+      .card {
+        display: flex;
+        flex-direction: column;
+        width: 500px;       /* ← pick your fixed width */
+        height: 100%;       /* keeps the flex-stretch behavior */
+      }
+
+      /* 3) Let the card-content grow, but don’t scroll the whole card */
+      .card-content {
+        flex-grow: 1;
+        overflow: visible;  /* allow full content; we’ll only scroll the tags */
+      }
+
+      /* 4) Keep the skills/tags container scrollable when it overflows */
+      .tags-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        max-height: 6rem;      /* limit its height */
+        overflow-y: auto;      /* vertical scrollbar */
+        padding-right: 0.5rem; /* room for the scrollbar */
+      }
+
+      /* 5) Ensure very long tag text wraps inside each tag */
+      .tags-container .tag {
+        white-space: normal;
+        word-break: break-word;
+      }
+
 
   </style>
 </head>
@@ -62,137 +84,231 @@
 
   <!-- Main container -->
   <section class="section">
-    <div class="container">
-      <!-- Action buttons -->
-      <div class="level">
-        <div class="level-left"></div>
-        <div class="level-right">
+  <div class="container">
+    <!-- FILTER + REFRESH ROW -->
+    <div class="level is-mobile">
+      <div class="level-left">
+        <div class="level-item">
+          <label class="label mr-2 nowrap">Max Years:</label>
+          <div class="select is-small">
+            <select id="years-filter">
+              <option value="">All</option>
+              <option value="0">≤ 0</option>
+              <option value="1">≤ 1</option>
+              <option value="2">≤ 2</option>
+              <option value="3">≤ 3</option>
+              <option value="4">≤ 4</option>
+              <option value="5">≤ 5</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="level-right">
+        <div class="level-item">
           <button class="button is-link" id="refresh-btn">
             <span class="icon"><i class="fas fa-sync-alt"></i></span>
             <span>Refresh Jobs</span>
           </button>
         </div>
       </div>
-
-      <!-- Job cards grid -->
-      <div class="columns is-multiline" id="jobs">
-        <!-- Cards will be inserted here via JavaScript -->
-      </div>
     </div>
-  </section>
+
+    <!-- JOB CARDS GRID -->
+    <div class="columns is-multiline is-centered" id="jobs"></div>
+
+    <!-- PAGINATION -->
+    <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+      <button class="pagination-previous" id="prev-btn">Previous</button>
+      <button class="pagination-next"     id="next-btn">Next</button>
+      <ul class="pagination-list"         id="page-list"></ul>
+    </nav>
+  </div>
+</section>
 
   <!-- Bulma and JS dependencies are already in CSS; now add script -->
   <script>
-    const jobsContainer = document.getElementById("jobs");
-    const refreshBtn = document.getElementById("refresh-btn");
+  const jobsContainer = document.getElementById("jobs");
+  const prevBtn       = document.getElementById("prev-btn");
+  const nextBtn       = document.getElementById("next-btn");
+  const pageList      = document.getElementById("page-list");
+  const yearsFilter   = document.getElementById("years-filter");
 
-    async function loadJobs() {
-      // Show a Bulma loading placeholder
+  let jobsData      = [];
+  let filteredData  = [];
+  let currentPage   = 1;
+  const pageSize    = 9;
+  let totalPages    = 1;
+
+  async function fetchJobs() {
+    // show spinner
+    jobsContainer.innerHTML = `
+      <div class="column is-12 has-text-centered">
+        <span class="icon is-large">
+          <i class="fas fa-spinner fa-pulse fa-3x"></i>
+        </span>
+      </div>
+    `;
+    try {
+      const res = await fetch("/api/jobs");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      jobsData = await res.json();
+      applyFilter();         // sets filteredData & totalPages
+      renderPage();
+      renderPagination();
+    } catch (err) {
       jobsContainer.innerHTML = `
         <div class="column is-12 has-text-centered">
-          <span class="icon is-large">
-            <i class="fas fa-spinner fa-pulse fa-3x"></i>
-          </span>
+          <p class="has-text-danger">Error loading jobs.</p>
         </div>
       `;
+      console.error(err);
+    }
+  }
 
-      try {
-        const res = await fetch("/api/jobs");
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const jobs = await res.json();
+  function applyFilter() {
+    const minYears = yearsFilter.value;
+    if (minYears === "") {
+      filteredData = jobsData;
+    } else {
+          const maxYears = yearsFilter.value;
+          if (maxYears === "") {
+            filteredData = jobsData;
+          } else {
+            filteredData = jobsData.filter(
+              job => job.years <= Number(maxYears)
+            );
+          }
+    }
+    totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
+    currentPage = 1;
+  }
 
-        if (!jobs.length) {
-          jobsContainer.innerHTML = `
-            <div class="column is-12 has-text-centered">
-              <p class="has-text-grey">No jobs found.</p>
-            </div>
-          `;
-          return;
-        }
+  function renderPage() {
+    jobsContainer.innerHTML = "";
+    const start  = (currentPage - 1) * pageSize;
+    const slice  = filteredData.slice(start, start + pageSize);
 
-        // Clear and render job cards
-        jobsContainer.innerHTML = "";
-        jobs.forEach((job) => {
-          const col = document.createElement("div");
-          col.className = "column is-12-mobile is-6-tablet is-4-desktop";
-
-          // Build a Bulma card
-          col.innerHTML = `
-            <div class="card">
-              <header class="card-header">
-                <p class="card-header-title">
-                  ${job.job_title}
-                </p>
-              </header>
-              <div class="card-content">
-                <div class="media">
-                  <div class="media-content">
-                    <p class="title is-5">${job.company}</p>
-                    <p class="subtitle is-6">
-                      <span class="icon has-text-info">
-                        <i class="fas fa-map-marker-alt"></i>
-                      </span>
-                      ${job.location || "Unknown"} &nbsp;&nbsp;
-                      <span class="icon has-text-warning">
-                        <i class="fas fa-clock"></i>
-                      </span>
-                      ${job.years} yr${job.years !== 1 ? "s" : ""}
-                    </p>
-                  </div>
-                </div>
-                <!-- <div class="content description">
-                  ${job.description}
-                </div> -->
-                <nav class="level is-mobile">
-                  <div class="content">
-                    <div class="tags-container">
-                      ${job.skills
-                        .map(
-                          (s) => `<span class="tag is-light is-medium">${s}</span>`
-                        )
-                        .join("")}
-                    </div>
-                  </div>
-                </nav>
-              </div>
-              <footer class="card-footer">
-                <a
-                  href="${job.job_url}"
-                  class="card-footer-item"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  View on ${job.job_board}
-                </a>
-              </footer>
-            </div>
-          `;
-          jobsContainer.appendChild(col);
-        });
-      } catch (error) {
-        jobsContainer.innerHTML = `
-          <div class="column is-12 has-text-centered">
-            <p class="has-text-danger">Error loading jobs.</p>
-          </div>
-        `;
-        console.error(error);
-      }
+    if (!slice.length) {
+      jobsContainer.innerHTML = `
+        <div class="column is-12 has-text-centered">
+          <p class="has-text-grey">No jobs found.</p>
+        </div>
+      `;
+      return;
     }
 
-    refreshBtn.addEventListener("click", async () => {
-      refreshBtn.classList.add("is-loading");
-      try {
-        const res = await fetch("/api/refresh", { method: "POST" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        await loadJobs();
-      } catch (err) {
-        console.error("Refresh failed:", err);
-      } finally {
-        refreshBtn.classList.remove("is-loading");
-      }
+    slice.forEach((job) => {
+      const col = document.createElement("div");
+      col.className = "column is-12-mobile is-6-tablet is-4-desktop";
+      col.innerHTML = `
+        <div class="card">
+          <header class="card-header">
+            <p class="card-header-title">${job.job_title}</p>
+          </header>
+          <div class="card-content">
+            <div class="media">
+              <div class="media-content">
+                <p class="title is-5">${job.company}</p>
+                <p class="subtitle is-6">
+                  <span class="icon has-text-info">
+                    <i class="fas fa-map-marker-alt"></i>
+                  </span>
+                  ${job.location || "Unknown"} &nbsp;&nbsp;
+                  <span class="icon has-text-warning">
+                    <i class="fas fa-clock"></i>
+                  </span>
+                  ${job.years} yr${job.years !== 1 ? "s" : ""}
+                </p>
+              </div>
+            </div>
+            <nav class="level is-mobile">
+              <div class="content">
+                <div class="tags-container">
+                  ${job.skills
+                    .map((s) => `<span class="tag is-light is-medium">${s}</span>`)
+                    .join("")}
+                </div>
+              </div>
+            </nav>
+          </div>
+          <footer class="card-footer">
+            <a href="${job.job_url}"
+               class="card-footer-item"
+               target="_blank"
+               rel="noopener noreferrer">
+              View on ${job.job_board}
+            </a>
+          </footer>
+        </div>
+      `;
+      jobsContainer.appendChild(col);
     });
+  }
 
-    window.addEventListener("DOMContentLoaded", loadJobs);
-  </script>
+  function renderPagination() {
+    pageList.innerHTML = "";
+    for (let i = 1; i <= totalPages; i++) {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <a class="pagination-link ${i === currentPage ? "is-current" : ""}"
+           aria-label="Page ${i}"
+           data-page="${i}">
+          ${i}
+        </a>
+      `;
+      pageList.appendChild(li);
+    }
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = currentPage === totalPages;
+
+    // page number clicks
+    pageList.querySelectorAll(".pagination-link").forEach((link) => {
+      link.addEventListener("click", () => {
+        currentPage = Number(link.dataset.page);
+        renderPage();
+        renderPagination();
+      });
+    });
+  }
+
+  // prev/next
+  prevBtn.addEventListener("click", () => {
+    if (currentPage > 1) {
+      currentPage--;
+      renderPage();
+      renderPagination();
+    }
+  });
+  nextBtn.addEventListener("click", () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      renderPage();
+      renderPagination();
+    }
+  });
+
+  // when filter changes, re-apply & redraw
+  yearsFilter.addEventListener("change", () => {
+    applyFilter();
+    renderPage();
+    renderPagination();
+  });
+
+  // hook up refresh & initial load
+  document.getElementById("refresh-btn").addEventListener("click", async () => {
+    const btn = document.getElementById("refresh-btn");
+    btn.classList.add("is-loading");
+    try {
+      const res = await fetch("/api/refresh", { method: "POST" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await fetchJobs();
+    } finally {
+      btn.classList.remove("is-loading");
+    }
+  });
+  window.addEventListener("DOMContentLoaded", fetchJobs);
+</script>
+
+
 </body>
 </html>
